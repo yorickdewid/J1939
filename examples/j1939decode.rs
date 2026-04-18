@@ -4,7 +4,17 @@ use j1939::Id;
 use j1939::PGN;
 use j1939::diagnostic;
 use j1939::protocol;
-use j1939::spn::*;
+use j1939::spn::{
+    AmbientConditionsMessage, CabIlluminationMessage, ECUHistoryMessage,
+    ElectronicBrakeController1Message, ElectronicEngineController1Message,
+    ElectronicEngineController2Message, ElectronicEngineController3Message,
+    EngineFluidLevelPressure1Message, EngineFluidLevelPressure2Message,
+    EngineTemperature1Message, FanDriveMessage, FuelConsumptionMessage, FuelEconomyMessage,
+    HighResolutionVehicleDistanceMessage, InletExhaustConditions1Message,
+    PowerTakeoffInformationMessage, ShutdownMessage, TachographMessage, TankInformation1Message,
+    TimeDate, TorqueSpeedControl1Message, VehicleDistanceMessage, VehicleElectricalPowerMessage,
+    VehiclePositionMessage,
+};
 
 fn usage() {
     println!("Usage: j1939decode <input>");
@@ -105,14 +115,10 @@ fn decode_data(pgn: PGN, data: &[u8]) {
 }
 
 fn main() {
-    let input = env::args().nth(1);
-
-    if input.is_none() {
+    let Some(input_str) = env::args().nth(1) else {
         usage();
         return;
-    }
-
-    let input_str = input.unwrap();
+    };
     let parts: Vec<&str> = input_str.split('#').collect();
 
     let id_str = parts[0];
@@ -137,21 +143,15 @@ fn main() {
     println!("Broadcast: {}", id.is_broadcast());
 
     if let Some(ge) = id.group_extension() {
-        println!(
-            "Group Extension (GE)/PDU Specific (PS): 0x{:02X} ({})",
-            ge, ge
-        );
+        println!("Group Extension (GE)/PDU Specific (PS): 0x{ge:02X} ({ge})");
     }
 
     if let Some(da) = id.destination_address() {
-        println!("Destination Address (DA): 0x{:02X} ({})", da, da);
+        println!("Destination Address (DA): 0x{da:02X} ({da})");
     }
 
-    println!(
-        "Source Address (SA): 0x{:02X} ({})",
-        id.source_address(),
-        id.source_address()
-    );
+    let sa = id.source_address();
+    println!("Source Address (SA): 0x{sa:02X} ({sa})");
 
     if parts.len() > 1 {
         let data_str = parts[1];
@@ -167,7 +167,7 @@ fn main() {
             data.push(byte);
         }
         println!();
-        println!("Data Hex: {:02X?}", data);
+        println!("Data Hex: {data:02X?}");
         if !data.is_empty() {
             decode_data(id.pgn(), &data);
         }

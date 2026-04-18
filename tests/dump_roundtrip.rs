@@ -3,9 +3,9 @@ use j1939::spn::*;
 fn hex_to_bytes(s: &str) -> [u8; 8] {
     let mut bytes = [0u8; 8];
     for (i, chunk) in s.as_bytes().chunks(2).enumerate().take(8) {
-        let hi = (chunk[0] as char).to_digit(16).unwrap();
-        let lo = (chunk[1] as char).to_digit(16).unwrap();
-        bytes[i] = ((hi << 4) | lo) as u8;
+        let hi = (chunk[0] as char).to_digit(16).expect("invalid hex digit");
+        let lo = (chunk[1] as char).to_digit(16).expect("invalid hex digit");
+        bytes[i] = u8::try_from((hi << 4) | lo).expect("hex byte fits in u8");
     }
     bytes
 }
