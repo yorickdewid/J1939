@@ -694,7 +694,7 @@ mod tests {
 
         // For PDU1, PS is destination address, not part of PGN
         assert_eq!(id.pgn_raw(), 0xEA00); // Should have PS=00
-        assert!(id.pgn_raw() & 0xFF == 0); // Low byte should be zero
+        assert!(id.pgn_raw().trailing_zeros() >= 8); // Low byte should be zero
     }
 
     #[test]

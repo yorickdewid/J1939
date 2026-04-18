@@ -231,7 +231,7 @@ mod tests {
         let mut transport = BroadcastTransport::new(0x01, PGN::AddressClaimed).with_data(&data);
 
         let frame = transport.next_frame();
-        assert_eq!(frame.id().as_raw(), 0x1CECFF01);
+        assert_eq!(frame.id().as_raw(), 0x1CEC_FF01);
         assert_eq!(frame.len(), 8);
         assert_eq!(
             frame.as_ref(),
@@ -239,7 +239,7 @@ mod tests {
         );
 
         let frame = transport.next_frame();
-        assert_eq!(frame.id().as_raw(), 0x1CEBFF01);
+        assert_eq!(frame.id().as_raw(), 0x1CEB_FF01);
         assert_eq!(frame.len(), 8);
         assert_eq!(
             frame.as_ref(),
@@ -247,7 +247,7 @@ mod tests {
         );
 
         let frame = transport.next_frame();
-        assert_eq!(frame.id().as_raw(), 0x1CEBFF01);
+        assert_eq!(frame.id().as_raw(), 0x1CEB_FF01);
         assert_eq!(frame.len(), 8);
         assert_eq!(
             frame.as_ref(),
@@ -264,7 +264,7 @@ mod tests {
         let mut transport = BroadcastTransport::new(0x01, PGN::AddressClaimed);
 
         transport.from_frame(
-            &FrameBuilder::new(Id::new(0x1CECFF01))
+            &FrameBuilder::new(Id::new(0x1CEC_FF01))
                 .copy_from_slice(&frame1)
                 .build(),
         );
@@ -272,12 +272,12 @@ mod tests {
         assert_eq!(transport.packet_count(), 2);
 
         transport.from_frame(
-            &FrameBuilder::new(Id::new(0x1CEBFF01))
+            &FrameBuilder::new(Id::new(0x1CEB_FF01))
                 .copy_from_slice(&frame2)
                 .build(),
         );
         transport.from_frame(
-            &FrameBuilder::new(Id::new(0x1CEBFF01))
+            &FrameBuilder::new(Id::new(0x1CEB_FF01))
                 .copy_from_slice(&frame3)
                 .build(),
         );
@@ -309,7 +309,7 @@ mod tests {
         // First, receive the connection management frame announcing 9 bytes
         let cm_frame = [0x20, 0x09, 0x00, 0x02, 0xFF, 0x00, 0xEE, 0x00];
         transport.from_frame(
-            &FrameBuilder::new(Id::new(0x1CECFF01))
+            &FrameBuilder::new(Id::new(0x1CEC_FF01))
                 .copy_from_slice(&cm_frame)
                 .build(),
         );
@@ -320,7 +320,7 @@ mod tests {
         // Now try to receive a data frame with sequence 0 (invalid)
         let invalid_frame = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
         transport.from_frame(
-            &FrameBuilder::new(Id::new(0x1CEBFF01))
+            &FrameBuilder::new(Id::new(0x1CEB_FF01))
                 .copy_from_slice(&invalid_frame)
                 .build(),
         );
@@ -336,7 +336,7 @@ mod tests {
         let transport = BroadcastTransport::new(0x01, PGN::ProprietaryA)
             .with_data(&max_data);
 
-        let expected_packets = (DATA_MAX_LENGTH + DATA_FRAME_SIZE - 1) / DATA_FRAME_SIZE;
+        let expected_packets = DATA_MAX_LENGTH.div_ceil(DATA_FRAME_SIZE);
         assert_eq!(transport.packet_count(), expected_packets);
         assert_eq!(transport.len(), DATA_MAX_LENGTH);
 

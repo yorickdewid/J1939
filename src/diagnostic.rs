@@ -318,7 +318,7 @@ mod tests {
         // Byte 4: 0xE3 = (0x7 << 5) | 3 = SPN bits 18:16 in bits 7:5, FMI in bits 4:0
         let diagnostic_message = Message1::from_pdu(&[0x00, 0xFF, 0xFF, 0xFF, 0xE3, 0x00]);
 
-        assert_eq!(diagnostic_message.suspect_parameter_number, 524287);
+        assert_eq!(diagnostic_message.suspect_parameter_number, 524_287);
         assert_eq!(diagnostic_message.failure_mode_identifier, 3);
     }
 
@@ -337,7 +337,7 @@ mod tests {
             amber_warning_lamp_flash: None,
             red_stop_lamp_flash: None,
             malfunction_indicator_lamp_flash: None,
-            suspect_parameter_number: 190000,
+            suspect_parameter_number: 190_000,
             failure_mode_identifier: 12,
             spn_conversion_method: 0,
             occurrence_count: 5,
@@ -346,11 +346,11 @@ mod tests {
         let encoded = original.to_pdu();
         let decoded = Message1::from_pdu(&encoded);
 
-        assert_eq!(decoded.suspect_parameter_number, 190000);
+        assert_eq!(decoded.suspect_parameter_number, 190_000);
         assert_eq!(decoded.failure_mode_identifier, 12);
         assert_eq!(decoded.occurrence_count, 5);
 
         // Verify byte 4 layout: SPN high bits in 7:5, FMI in 4:0
-        assert_eq!(encoded[4], (0x2 << 5) | 12);
+        assert_eq!(encoded[4], (0x2 << 5) | 0x0C);
     }
 }

@@ -2884,8 +2884,8 @@ mod tests {
         let encoded = msg.to_pdu();
         let decoded = VehiclePositionMessage::from_pdu(&encoded);
         // f32 round-trip tolerance
-        assert!((decoded.latitude.unwrap() - 52.0).abs() < 0.01);
-        assert!((decoded.longitude.unwrap() - 4.5).abs() < 0.01);
+        assert!((decoded.latitude.expect("latitude should decode") - 52.0).abs() < 0.01);
+        assert!((decoded.longitude.expect("longitude should decode") - 4.5).abs() < 0.01);
     }
 
     #[test]
