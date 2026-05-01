@@ -1,4 +1,6 @@
 use std::env;
+use std::fmt::Write as _;
+use std::io::{self, BufRead, IsTerminal};
 
 use j1939::Id;
 use j1939::PGN;
@@ -18,10 +20,49 @@ use j1939::spn::{
 
 fn usage() {
     println!("Usage: j1939decode <input>");
+    println!("       j1939decode < dump.log");
     println!();
     println!("Options:");
     println!("  <input>     29-bit CAN ID in hexadecimal format (0x18EAFF00)");
     println!("              or CAN ID and data separated by '#' (0x18FEE6EE#243412024029837D)");
+    println!();
+    println!("With no argument and stdin piped, reads one frame per line and prints");
+    println!("a one-line summary. The last whitespace-separated token of each line is");
+    println!("parsed as <id>#<data>, so candump -L output works directly.");
+}
+
+fn print_summary_line(line: &str) {
+    let Some(token) = line.split_whitespace().next_back() else {
+        return;
+    };
+    let (id_str, data_str) = match token.split_once('#') {
+        Some((id, data)) => (id, Some(data)),
+        None => (token, None),
+    };
+    let id_hex = id_str.trim_start_matches("0x");
+    let Ok(id_raw) = u32::from_str_radix(id_hex, 16) else {
+        eprintln!("skip: invalid ID `{id_str}`");
+        return;
+    };
+
+    let id = Id::new(id_raw);
+    let mut out = format!(
+        "0x{:08X} pri={} PGN={:?}(0x{:04X}) SA=0x{:02X}",
+        id.as_raw(),
+        id.priority(),
+        id.pgn(),
+        id.pgn_raw(),
+        id.source_address(),
+    );
+    if let Some(da) = id.destination_address() {
+        let _ = write!(out, " DA=0x{da:02X}");
+    } else if let Some(ge) = id.group_extension() {
+        let _ = write!(out, " GE=0x{ge:02X}");
+    }
+    if let Some(data) = data_str.filter(|d| !d.is_empty()) {
+        let _ = write!(out, " DATA={}", data.to_uppercase());
+    }
+    println!("{out}");
 }
 
 fn decode_data(pgn: PGN, data: &[u8]) {
@@ -116,7 +157,16 @@ fn decode_data(pgn: PGN, data: &[u8]) {
 
 fn main() {
     let Some(input_str) = env::args().nth(1) else {
-        usage();
+        if io::stdin().is_terminal() {
+            usage();
+        } else {
+            let stdin = io::stdin();
+            for line in stdin.lock().lines().map_while(Result::ok) {
+                if !line.trim().is_empty() {
+                    print_summary_line(&line);
+                }
+            }
+        }
         return;
     };
 
