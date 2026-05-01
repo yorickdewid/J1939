@@ -60,6 +60,14 @@ $ cargo run --example j1939decode 0x18FEE6EE#243412024029837D
 
 This runs a J1939 decoder on the ID '0x18FEE6EE' and the data '243412024029837D' (which is PGN TimeDate).
 
+When invoked without an argument and stdin is piped, the decoder reads one frame per line and prints a one-line summary. The last whitespace-separated token of each line is parsed as `<id>#<data>`, so `candump -L` output works directly.
+
+```sh
+$ candump -L can0 | cargo run --example j1939decode
+0x18FEE6EE pri=6 PGN=TimeDate(0xFEE6) SA=0xEE GE=0xE6 DATA=243412024029837D
+0x0CF00400 pri=3 PGN=ElectronicEngineController1(0xF004) SA=0x00 GE=0x04 DATA=0000000000000000
+```
+
 
 ## no_std
 
