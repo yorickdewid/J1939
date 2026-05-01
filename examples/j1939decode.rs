@@ -1,6 +1,9 @@
 use std::env;
 use std::fmt::Write as _;
 use std::io::{self, BufRead, IsTerminal};
+use std::panic::{self, AssertUnwindSafe};
+
+const ID_29_BIT_MAX: u32 = 0x1FFF_FFFF;
 
 use j1939::Id;
 use j1939::PGN;
@@ -44,6 +47,9 @@ fn print_summary_line(line: &str) {
         eprintln!("skip: invalid ID `{id_str}`");
         return;
     };
+    if id_raw > ID_29_BIT_MAX {
+        eprintln!("warn: ID 0x{id_raw:X} exceeds 29 bits, masking to 0x{:X}", id_raw & ID_29_BIT_MAX);
+    }
 
     let id = Id::new(id_raw);
     let mut out = format!(
@@ -63,6 +69,21 @@ fn print_summary_line(line: &str) {
         let _ = write!(out, " DATA={}", data.to_uppercase());
     }
     println!("{out}");
+}
+
+fn decode_data_safe(pgn: PGN, data: &[u8]) {
+    let prev_hook = panic::take_hook();
+    panic::set_hook(Box::new(|_| {}));
+    let result = panic::catch_unwind(AssertUnwindSafe(|| decode_data(pgn, data)));
+    panic::set_hook(prev_hook);
+    if let Err(payload) = result {
+        let msg = payload
+            .downcast_ref::<&str>()
+            .copied()
+            .or_else(|| payload.downcast_ref::<String>().map(String::as_str))
+            .unwrap_or("decode panicked");
+        eprintln!("Decode failed: {msg}");
+    }
 }
 
 fn decode_data(pgn: PGN, data: &[u8]) {
@@ -184,6 +205,12 @@ fn main() {
         usage();
         return;
     };
+    if id_raw > ID_29_BIT_MAX {
+        eprintln!(
+            "Warning: ID 0x{id_raw:X} exceeds 29 bits, masking to 0x{:X}",
+            id_raw & ID_29_BIT_MAX,
+        );
+    }
 
     let id = Id::new(id_raw);
 
@@ -229,7 +256,7 @@ fn main() {
         println!();
         println!("Data Hex: {data:02X?}");
         if !data.is_empty() {
-            decode_data(id.pgn(), &data);
+            decode_data_safe(id.pgn(), &data);
         }
     }
 }
