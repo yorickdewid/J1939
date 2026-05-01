@@ -128,10 +128,11 @@ fn main() {
     let parts: Vec<&str> = input_str.split('#').collect();
 
     let id_str = parts[0];
-    let id_raw = if id_str.starts_with("0x") {
-        u32::from_str_radix(id_str.trim_start_matches("0x"), 16).expect("Invalid ID")
-    } else {
-        u32::from_str_radix(id_str, 16).expect("Invalid ID")
+    let id_hex = id_str.trim_start_matches("0x");
+    let Ok(id_raw) = u32::from_str_radix(id_hex, 16) else {
+        eprintln!("Invalid ID: expected 29-bit CAN ID in hexadecimal (e.g. 0x18EAFF00)");
+        usage();
+        return;
     };
 
     let id = Id::new(id_raw);
@@ -169,7 +170,10 @@ fn main() {
 
         let mut data = Vec::new();
         for i in (0..data_str.len()).step_by(2) {
-            let byte = u8::from_str_radix(&data_str[i..i + 2], 16).expect("Invalid data byte");
+            let Ok(byte) = u8::from_str_radix(&data_str[i..i + 2], 16) else {
+                eprintln!("Invalid data: expected hex bytes (e.g. 243412024029837D)");
+                return;
+            };
             data.push(byte);
         }
         println!();
