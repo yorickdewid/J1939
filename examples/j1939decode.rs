@@ -119,6 +119,12 @@ fn main() {
         usage();
         return;
     };
+
+    if matches!(input_str.as_str(), "-h" | "--help") {
+        usage();
+        return;
+    }
+
     let parts: Vec<&str> = input_str.split('#').collect();
 
     let id_str = parts[0];
